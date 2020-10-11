@@ -40,6 +40,16 @@ public:
   ~ScopedVips() {}
 };
 
+// Thanks to https://stackoverflow.com/questions/56788745/how-to-convert-stdfilesystemfile-time-type-to-a-string-using-gcc-9/58237530#58237530
+template <typename TP>
+std::time_t to_time_t(TP tp)
+{
+    using namespace std::chrono;
+    auto sctp = time_point_cast<system_clock::duration>(tp - TP::clock::now()
+              + system_clock::now());
+    return system_clock::to_time_t(sctp);
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char** argv)
 {
@@ -107,7 +117,9 @@ int main(int argc, char** argv)
         continue;
       }
 
-      auto lastWriteTimeT = decltype(lastWriteTime)::clock::to_time_t(lastWriteTime);
+      // This line doesn't work on Linux
+      // auto lastWriteTimeT = decltype(lastWriteTime)::clock::to_time_t(lastWriteTime);
+      time_t lastWriteTimeT = to_time_t(lastWriteTime);
       std::cout << "File write time is " << std::asctime(std::localtime(&lastWriteTimeT)) << '\n';
 
       // Get the date created from the EXIF info
