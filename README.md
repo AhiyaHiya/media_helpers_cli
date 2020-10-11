@@ -21,3 +21,8 @@ This just prints out the images EXIF data to the command line output.
 Some EXIF lib tool.
 
 Microsoft's vcpkg tool is a submodule in this project, and used to manage dependencies ( https://github.com/microsoft/vcpkg#quick-start-unix ).
+
+# other notes
+
+$ cmake -B [build directory] -S . -DCMAKE_TOOLCHAIN_FILE=[path to vcpkg]/scripts/buildsystems/vcpkg.cmake
+$ cmake --build [build directory]
