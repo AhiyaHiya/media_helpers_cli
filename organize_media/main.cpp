@@ -24,22 +24,29 @@ static const auto photoFileExtensions = std::vector< std::string >{
     ".jpeg", ".tiff", ".png", ".nef",
     ".JPEG", ".TIFF", ".PNG", ".NEF",
     };
-// clang-format on
 
 ////////////////////////////////////////////////////////////////////////////////////////
-auto GetFilesInFolder(const fs::path& workingDirectory, const vector< string >& extensions) -> vector< fs::path >;
+vector<fs::path> GetFilesInFolder(const fs::path& workingDirectory, const vector< string >& extensions);
 void ListFilesInFolder(const fs::path& workingDirectory);
 
 void* HeaderCallbackFunc(VipsImage* image, const char* field, GValue* value, void* my_data);
 
+////////////////////////////////////////////////////////////////////////////////////////
 class ScopedVips
 {
 public:
-  ScopedVips() { VIPS_INIT(nullptr); }
+  ScopedVips() 
+  {
+    VIPS_INIT(nullptr);
+  }
 
-  ~ScopedVips() {}
+  ~ScopedVips() 
+  {
+    // We may need shutdown code in the future.
+  }
 };
 
+////////////////////////////////////////////////////////////////////////////////////////
 // Thanks to https://stackoverflow.com/questions/56788745/how-to-convert-stdfilesystemfile-time-type-to-a-string-using-gcc-9/58237530#58237530
 template <typename TP>
 std::time_t to_time_t(TP tp)
@@ -49,11 +56,11 @@ std::time_t to_time_t(TP tp)
               + system_clock::now());
     return system_clock::to_time_t(sctp);
 }
+// clang-format on
 
 ////////////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char** argv)
 {
-
   // Setup program options
   auto desc = po::options_description("Options");
   // clang-format off
@@ -104,6 +111,7 @@ int main(int argc, char** argv)
 
     ScopedVips scopedVips;
 
+    // Do something with each photo we found in the current working folder.
     for (auto& file : foundFiles)
     {
       std::cout << file << "\n";
@@ -123,23 +131,24 @@ int main(int argc, char** argv)
       std::cout << "File write time is " << std::asctime(std::localtime(&lastWriteTimeT)) << '\n';
 
       // Get the date created from the EXIF info
-      auto vipsImage = vips_image_new_from_file(file.c_str(), NULL);
-      if (vipsImage == nullptr)
+      auto image = vips_image_new_from_file(file.c_str(), NULL);
+      if (image == nullptr)
       {
         std::cout << "Something bad happened\n";
       }
       // key/value, key is field, value is field value
-      map<string, string> headerValues;
-      void* my_data = reinterpret_cast<map<string, string>*>(&headerValues);
-      auto nullIsSuccess = vips_image_map(vipsImage, HeaderCallbackFunc, my_data);
-      if(nullIsSuccess==nullptr)
+      map< string, string > headerValues;
+      void* hrdValMapAsVPtr = reinterpret_cast< map< string, string >* >(&headerValues);
+
+      auto failure = vips_image_map(image, HeaderCallbackFunc, hrdValMapAsVPtr);
+      if (!failure)
       {
-        for(const auto& entry : headerValues)
+        // Now print out each EXIF entry we found in the image.
+        for (const auto& entry : headerValues)
         {
-          const auto& key = entry.first;
+          const auto& key   = entry.first;
           const auto& value = entry.second;
           cout << key.c_str() << " = " << value.c_str() << "\n";
-          // printf("%s = %s\n", key.c_str(), value.c_str());
         }
       }
     }
@@ -147,7 +156,7 @@ int main(int argc, char** argv)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
-auto GetFilesInFolder(const fs::path& workingDirectory, const vector< string >& extensions) -> vector< fs::path >
+vector<fs::path> GetFilesInFolder(const fs::path& workingDirectory, const vector< string >& extensions)
 {
   auto resultSet = vector< fs::path >();
 
@@ -185,9 +194,9 @@ void ListFilesInFolder(const fs::path& workingDirectory)
 ////////////////////////////////////////////////////////////////////////////////////////
 void* HeaderCallbackFunc(VipsImage* image, const char* field, GValue* value, void* my_data)
 {
-  map<string, string>* headerValues = reinterpret_cast<map<string, string>*>(my_data);
-  char* valueAsStr = g_strdup_value_contents(value);
-  // printf("%s = %s", field, valueAsStr);
+  auto headerValues = reinterpret_cast< map< string, string >* >(my_data);
+  auto valueAsStr   = g_strdup_value_contents(value);
+
   (*headerValues)[string(field)] = string(valueAsStr);
   g_free(valueAsStr);
 
