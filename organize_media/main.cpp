@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include <boost/program_options.hpp>
+#include <libraw/libraw.h>
 #include <vips/vips.h>
 
 /**
@@ -21,15 +22,18 @@ using namespace std;
 
 // clang-format off
 static const auto photoFileExtensions = std::vector< std::string >{
-    ".jpeg", ".tiff", ".png", ".nef",
-    ".JPEG", ".TIFF", ".PNG", ".NEF",
-    };
+  ".jpg", ".jpeg", ".tiff", ".png", ".nef",
+  ".JPG", ".JPEG", ".TIFF", ".PNG", ".NEF",
+};
 
 ////////////////////////////////////////////////////////////////////////////////////////
 vector<fs::path> GetFilesInFolder(const fs::path& workingDirectory, const vector< string >& extensions);
 void ListFilesInFolder(const fs::path& workingDirectory);
 
 void* HeaderCallbackFunc(VipsImage* image, const char* field, GValue* value, void* my_data);
+
+void ActOnPhotosUsingVips(const fs::path workingDirectory);
+
 
 ////////////////////////////////////////////////////////////////////////////////////////
 class ScopedVips
@@ -105,58 +109,13 @@ int main(int argc, char** argv)
   // Test 2
   if (actOnPhotos)
   {
-    // Get the files
-    auto foundFiles = GetFilesInFolder(currentPath, photoFileExtensions);
-    std::cout << "Found files\n";
-
-    ScopedVips scopedVips;
-
-    // Do something with each photo we found in the current working folder.
-    for (auto& file : foundFiles)
-    {
-      std::cout << file << "\n";
-
-      // Get the date created from the file info
-      std::error_code failed;
-      auto            lastWriteTime = fs::last_write_time(file, failed);
-      if (failed)
-      {
-        std::cout << "Failed to get last_write_time for file" << file << "\n";
-        continue;
-      }
-
-      // This line doesn't work on Linux
-      // auto lastWriteTimeT = decltype(lastWriteTime)::clock::to_time_t(lastWriteTime);
-      time_t lastWriteTimeT = to_time_t(lastWriteTime);
-      std::cout << "File write time is " << std::asctime(std::localtime(&lastWriteTimeT)) << '\n';
-
-      // Get the date created from the EXIF info
-      auto image = vips_image_new_from_file(file.c_str(), NULL);
-      if (image == nullptr)
-      {
-        std::cout << "Something bad happened\n";
-      }
-      // key/value, key is field, value is field value
-      map< string, string > headerValues;
-      void* hrdValMapAsVPtr = reinterpret_cast< map< string, string >* >(&headerValues);
-
-      auto failure = vips_image_map(image, HeaderCallbackFunc, hrdValMapAsVPtr);
-      if (!failure)
-      {
-        // Now print out each EXIF entry we found in the image.
-        for (const auto& entry : headerValues)
-        {
-          const auto& key   = entry.first;
-          const auto& value = entry.second;
-          cout << key.c_str() << " = " << value.c_str() << "\n";
-        }
-      }
-    }
+    ActOnPhotosUsingVips(currentPath);
   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
-vector<fs::path> GetFilesInFolder(const fs::path& workingDirectory, const vector< string >& extensions)
+vector< fs::path > GetFilesInFolder(const fs::path&         workingDirectory,
+                                    const vector< string >& extensions)
 {
   auto resultSet = vector< fs::path >();
 
@@ -201,4 +160,56 @@ void* HeaderCallbackFunc(VipsImage* image, const char* field, GValue* value, voi
   g_free(valueAsStr);
 
   return nullptr;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////
+void ActOnPhotosUsingVips(const fs::path workingDirectory)
+{
+  // Get the files
+  auto foundFiles = GetFilesInFolder(workingDirectory, photoFileExtensions);
+  std::cout << "Found files\n";
+
+  ScopedVips scopedVips;
+
+  // Do something with each photo we found in the current working folder.
+  for (auto& file : foundFiles)
+  {
+    std::cout << file << "\n";
+
+    // Get the date created from the file info
+    auto failed        = std::error_code();
+    auto lastWriteTime = fs::last_write_time(file, failed);
+    if (failed)
+    {
+      std::cout << "Failed to get last_write_time for file" << file << "\n";
+      continue;
+    }
+
+    // This line doesn't work on Linux
+    // auto lastWriteTimeT = decltype(lastWriteTime)::clock::to_time_t(lastWriteTime);
+    time_t lastWriteTimeT = to_time_t(lastWriteTime);
+    std::cout << "File write time is " << std::asctime(std::localtime(&lastWriteTimeT)) << '\n';
+
+    // Get EXIF info using libVIPS
+    auto image = vips_image_new_from_file(file.c_str(), NULL);
+    if (image == nullptr)
+    {
+      std::cout << "Something bad happened\n";
+    }
+    // key/value, key is field, value is field value
+    map< string, string > headerValues;
+    void* hrdValMapAsVPtr = reinterpret_cast< map< string, string >* >(&headerValues);
+
+    auto failure = vips_image_map(image, HeaderCallbackFunc, hrdValMapAsVPtr);
+    if (!failure)
+    {
+      // Now print out each EXIF entry we found in the image.
+      for (const auto& entry : headerValues)
+      {
+        const auto& key   = entry.first;
+        const auto& value = entry.second;
+        cout << key.c_str() << " = " << value.c_str() << "\n";
+      }
+    }
+  }
 }
