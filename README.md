@@ -16,22 +16,16 @@ print_out_exif
 This just prints out the images EXIF data to the command line output.
 
 
-# external tools
-
-Some EXIF lib tool.
+# External tools
 
 Microsoft's vcpkg tool is a submodule in this project, and used to manage dependencies ( https://github.com/microsoft/vcpkg#quick-start-unix ).
+To search for a package in vcpkg, from the project root, you can type `./vcpkg/vcpkg search libname` and to install the package, it's similar
+so type `./vcpkg/vcpkg install somelibrary`.
 
-# other notes
+It will be important to install the libraries listed below before calling CMake to create your project file.
 
-$ cmake -B [build directory] -S . -DCMAKE_TOOLCHAIN_FILE=[path to vcpkg]/scripts/buildsystems/vcpkg.cmake
-$ cmake --build [build directory]
-
-# Libraries
+# Libraries used in project
 
 Boost
 libVIPS
-
-Use a package manager to bring these in.
-
-`pkg-config vips --cflags --libs`
+libRAW
