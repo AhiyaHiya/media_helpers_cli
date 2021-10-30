@@ -1,0 +1,9 @@
+
+######################################################################
+# Application
+add_executable(organize_media main.cpp files.cpp)
+
+target_link_libraries(organize_media
+  PRIVATE
+    CONAN_PKG::boost
+)

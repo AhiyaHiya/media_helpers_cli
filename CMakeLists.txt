@@ -22,11 +22,4 @@ conan_cmake_run(CONANFILE conanfile.txt
 
 include(${CMAKE_BINARY_DIR}/conanbuildinfo_multi.cmake)
 
-######################################################################
-# Application
-add_executable(organize_media organize_media/main.cpp)
-
-target_link_libraries(organize_media
-  PRIVATE
-    CONAN_PKG::boost
-)
+add_subdirectory(organize_media)
