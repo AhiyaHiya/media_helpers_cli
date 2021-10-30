@@ -1,0 +1,8 @@
+[requires]
+boost/1.77.0
+libraw/0.20.2
+
+[generators]
+cmake_multi
+xcode
+msbuild
