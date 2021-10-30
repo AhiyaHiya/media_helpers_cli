@@ -1,38 +1,32 @@
-cmake_minimum_required(VERSION 3.0.0)
-
-set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake
-	CACHE STRING "Vcpkg toolchain file")
-
-	set(CMAKE_CXX_STANDARD 17)
-	set(CMAKE_CXX_STANDARD_REQUIRED ON)
-	set(CMAKE_BUILD_TYPE debug)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+cmake_minimum_required(VERSION 3.19)
 
 project(media_helpers_cli VERSION 0.1.0)
 
-include(CTest)
-enable_testing()
+# C++17
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Boost - in vcpkg
-find_package(Boost 		REQUIRED 
-COMPONENTS filesystem program_options)
+# Folders for IDEs that support it
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-# libRAW - in vcpkg
-find_package(LibRaw   REQUIRED)
+# We need to specify these types since we are supporting multi-config IDEs like Xcode and Visual Studio
+list(APPEND CMAKE_CONFIGURATION_TYPES "Debug" "Release")
 
-# libVIPS - installed with local package manager
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(VIPS REQUIRED vips)
+######################################################################
+# Conan helper to download required files
+include(ConanHelper.cmake)
 
+conan_cmake_run(CONANFILE conanfile.txt
+                BASIC_SETUP CMAKE_TARGETS
+                BUILD missing)
+
+include(${CMAKE_BINARY_DIR}/conanbuildinfo_multi.cmake)
+
+######################################################################
+# Application
 add_executable(organize_media organize_media/main.cpp)
 
-target_include_directories(organize_media PUBLIC ${VIPS_INCLUDE_DIRS})
-target_link_directories(organize_media PUBLIC ${VIPS_LIBRARY_DIRS})
-target_link_libraries(organize_media Boost::filesystem Boost::program_options ${VIPS_LIBRARIES})
-target_compile_options(organize_media PUBLIC ${VIPS_CFLAGS_OTHER})
-
-add_definitions(${VIPS_CFLAGS} ${VIPS_CFLAGS_OTHER})
-
-set(CPACK_PROJECT_NAME ${PROJECT_NAME})
-set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
-include(CPack)
+target_link_libraries(organize_media
+  PRIVATE
+    CONAN_PKG::boost
+)
