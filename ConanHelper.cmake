@@ -11,7 +11,6 @@ if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
   # https://github.com/conan-io/cmake-conan/issues/336
   file(DOWNLOAD "https://raw.githubusercontent.com/conan-io/cmake-conan/develop/conan.cmake"
                 "${CMAKE_BINARY_DIR}/conan.cmake"
-                EXPECTED_HASH SHA256=855c95e546dcaf0538369e8a6dfa37e219cb9be2f9523eb2119755ebee8eef4f
                 TLS_VERIFY ON)
 endif()
 
