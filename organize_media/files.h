@@ -11,13 +11,3 @@ std::vector<std::string> get_photo_file_extensions();
 void list_files_in_folder(const std::filesystem::path& working_directory);
 
 void print_exif_for_file(const std::filesystem::path& file_path);
-
-// ExifHelper - Use this to init and shutdown
-class ExifHelper
-{
-public:
-  ExifHelper();
-  ~ExifHelper();
-
-private:
-};

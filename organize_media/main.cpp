@@ -100,7 +100,11 @@ int main(int argc, char** argv)
         }
 
         // Test 4 - get exif for each file
-        auto exif_helper = ExifHelper();
+        for (const auto& item : result_set)
+        {
+            print_exif_for_file(item);
+        }
+
     }
     else
     {
