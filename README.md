@@ -27,5 +27,5 @@ Visual Studio 2019
 # Libraries used in project
 
 Boost
-libExiv2
+libexif
 libRAW
