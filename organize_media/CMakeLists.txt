@@ -7,4 +7,5 @@ target_link_libraries(organize_media
   PRIVATE
     CONAN_PKG::boost
     CONAN_PKG::libexif
+    CONAN_PKG::libraw
 )
