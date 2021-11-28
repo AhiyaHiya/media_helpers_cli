@@ -102,7 +102,7 @@ int main(int argc, char** argv)
         // Test 4 - get exif for each file
         for (const auto& item : result_set)
         {
-            print_exif_for_file(item);
+            print_datetime_for_file(item);
         }
 
     }

@@ -3,6 +3,7 @@
 
 // Third party
 #include <libexif/exif-data.h>
+#include <libraw/libraw.h>
 
 // Project
 #include "files.h"
@@ -102,9 +103,34 @@ static void print_tag(const ExifData* data, const ExifIfd ifd, const ExifTag tag
         }
     }
 }
-// print_exif_for_file
-void print_exif_for_file(const std::filesystem::path& file_path)
+
+// Utility function; returns true if image is a RAW image type, based
+// on the file extension. Sorry, not looking at header at this moment.
+//
+bool is_raw_image(const std::filesystem::path& file_path)
 {
+    LibRaw     processor;
+    const bool is_raw = (processor.open_file(file_path.string().c_str()) == LIBRAW_SUCCESS);
+    processor.recycle();
+    return is_raw;
+}
+
+// print_datetime_for_file
+void print_datetime_for_file(const std::filesystem::path& file_path)
+{
+    printf("Examining file %s\n", file_path.string().c_str());
+
+    // For RAW images, we have to do a little work ourselves
+    if(is_raw_image(file_path))
+    {
+        LibRaw processor;
+        processor.open_file(file_path.string().c_str());
+        printf("Timestamp: %s", ctime(&(processor.imgdata.other.timestamp)) );
+        processor.recycle();
+        return;
+    }
+
+    // Regular image to work with
     auto exif_data_raw_ptr = exif_data_new_from_file(file_path.string().c_str());
     if (!exif_data_raw_ptr)
     {
